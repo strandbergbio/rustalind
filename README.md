@@ -1,2 +1,2 @@
 # rustalind
-Rosalind problems, solved in Rust
+[Rosalind problems](http://rosalind.info/problems/), solved in Rust

@@ -1,0 +1,6 @@
+[package]
+name = "rustalind"
+version = "0.1.0"
+authors = ["Adam Strandberg <adam.strandberg@pillpack.com>"]
+
+[dependencies]
