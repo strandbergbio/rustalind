@@ -1,33 +1,78 @@
 use std::collections::HashMap;
 use std::hash::Hash;
+use std::fmt::Debug;
+
 
 fn main() {
-    let text = String::from("ACGTTGCATGTCGCATGATGCATGAGAGCT");
-    let k = 4;
-    let hash = most_frequent_kmer_hash(&text, k);
-    println!("{:?}", hash);
+    ba1a();
+    ba1b();
+}
+
+fn ba1a() {
+    print!("Problem BA1A: ");
+    let text = String::from("ACAGATCACGACAGATCAATCAGATCAATCAGATCATTCAGATCAGTATCACGCAGATCAAACAGATCACCAACAGATCAGCAATCAGATCACAGATCACCAGATCATCAGATCATGCAGATCATCCAGATCATCATCAGATCACGCCAGATCACAGATCATGGGAATTCAGATCACAGATCATCCAGATCACAGATCACAGATCAGCGCAGATCATGTCCACGTAAAACACCCTCAGATCACAGATCAATCGCAGATCAGGAACCAGATCATGCCTTCAGATCACGAATCAGATCACGTGCAGATCACAGATCAACAGATCACAGATCACAGATCAGGTCAGATCATACAGATCAGCAGATCACAGATCAAGCGCAGATCATCAGATCAAGAATTGGTTTCCAGATCACCAGATCACAGATCATCCAGATCACAGATCAAACTGCAGATCATTTTAACAGATCATCAGATCAATGCAGATCAACAGATCAAGATAACAGATCACAGATCATACAGATCAGACAGATCATAAGCTTGCAGATCACAGATCAAGTCTCAGATCACAGATCATCAGATCACAGATCAATGGACAGATCATGCGTCAGATCACAGATCAAAGCTGAATGCGGACAGATCACAGATCACAGATCAGCAGATCACAGATCACACATCAGATCAGCAGATCAGGTAACAGATCAGCAGATCAACAGATCACCTCGCCAGATCAGACAGATCATACAGATCATTCAGATCACCAGATCACGCAGATCACAGATCAGCAGATCATTCAGATCACAGATCACAGATCATACAGATCACGCCAGATCACAGATCATCCAGATCATAACCAACAGATCAGCAGATCAGTAGACCAGATCATACAGATCATGCCTGTCAGATCAAGTCACAGATCATGCAGCTCAGATCACAGATCAATACAGATCATTCAGATCAAACCAGATCACAGATCATAAGATGCACAGATCAACGCAGATCAGA");
+    let pattern = String::from("CAGATCACA");
+    println!("{}", kmer_count(&text, &pattern))
+}
+
+fn ba1b() {
+    print!("Problem BA1B: ");
+    let text = String::from("GAGTCTATACTCTCGGCGTGTTATTAGTATTGTAACGTTTAGTATTACTCTCGTTAGTATTGTAACGTGCGTGTTAGAGTCTATTTAGTATTGAGTCTATTTAGTATTGTAACGTGCGTGTTAGAGTCTATACTCTCGGAGTCTATGAGTCTATGTAACGTTTAGTATTACTCTCGGTAACGTGAGTCTATGTAACGTGAGTCTATGAGTCTATGTAACGTTTAGTATTGTAACGTTTAGTATTTTAGTATTGCGTGTTAGCGTGTTAGAGTCTATGTAACGTGCGTGTTATTAGTATTTTAGTATTGCGTGTTAGAGTCTATGTAACGTACTCTCGACTCTCGTTAGTATTACTCTCGGAGTCTATACTCTCGTTAGTATTGTAACGTGTAACGTTTAGTATTGAGTCTATACTCTCGTTAGTATTGCGTGTTAGTAACGTGCGTGTTAACTCTCGTTAGTATTGCGTGTTAACTCTCGGAGTCTATACTCTCGTTAGTATTTTAGTATTTTAGTATTGAGTCTATTTAGTATTGTAACGTACTCTCGGAGTCTATGAGTCTATTTAGTATTACTCTCGGAGTCTATTTAGTATTGTAACGTGCGTGTTAGTAACGTGCGTGTTAGCGTGTTAACTCTCGGAGTCTATGTAACGTACTCTCGGCGTGTTATTAGTATTACTCTCGGAGTCTATGCGTGTTAACTCTCGGCGTGTTATTAGTATTTTAGTATTGAGTCTATGCGTGTTAACTCTCGGTAACGTGAGTCTATGTAACGTGAGTCTATGCGTGTTATTAGTATTGCGTGTTAGAGTCTATGTAACGT");
+    let k = 12;
+    let kmers = most_frequent_kmers(&text, k);
+    println!("{:?}", kmers);
 }
 
 fn most_frequent_kmers(text: &String, k: usize) -> Vec<&str> {
     let hash = most_frequent_kmer_hash(text, k);
-    let inverted_hash = invert_hash(hash);
+    let inverted_hash: HashMap<usize, Vec<&str>> = inefficient_invert_hash(hash);
 
-    return vec![&"hello"]
+    let mut max_key: &usize = &0;
+    for key in inverted_hash.keys() {
+        if key > max_key {
+            max_key = key;
+        }
+    }
 
+    let kmers = inverted_hash[max_key].clone();
+    kmers
 }
 
-type HashInvertible = Eq + Hash;
+// fn invert_hash<'a, K: Eq + Hash, V: Eq + Hash>(hash: &'a HashMap<K, V>) -> HashMap <&'a V, &'a Vec<K>> {
+//     let mut inverted: HashMap<&V, &Vec<K>> = HashMap::new();
+//     let hash = hash.iter();
 
-fn invert_hash<S: HashInvertible, T: HashInvertible>(hash: HashMap<S, T>) -> HashMap<T, Vec<S>> {
-    let mut inverted = HashMap::new();
+//     for (key, value) in hash {
+//         let mut vec = match inverted.get_mut(value) {
+//             Some(vec) => vec,
+//             None => &Vec::new(),
+//         };
+//         let key_clone = key.clone();
+//         vec.push(key_clone);
+//         inverted.insert(value, &vec);
+//     }
+//     inverted
+// }
+
+fn inefficient_invert_hash<K: Eq + Hash + Clone + Debug, V: Eq + Hash + Clone>(hash: HashMap<K, V>) -> HashMap<V, Vec<K>> {
+    let mut inverted: HashMap<V, Vec<K>> = HashMap::new();
+    let hash2 = hash.clone();
     let hash = hash.iter();
+    for (_key, value) in hash {
+        let v = Vec::new();
+        let new_val = value.clone();
+        inverted.insert(new_val, v);
+    }
 
-    for (key, value) in hash {
-        let mut new_vec: Vec<S> = match inverted.get(value) {
-            Some(vec) => vec.push(&key),
-            None => vec![&key],
-        };
-        inverted.insert(value, new_vec);
+    let hash2 = hash2.iter();
+    for (key, value) in hash2 {
+        match inverted.get_mut(value) {
+            Some(vec) => {
+                let new_key = key.clone();
+                vec.push(new_key)
+            },
+            None => {},
+        }
     }
     inverted
 }
@@ -62,28 +107,48 @@ fn kmer_count(text: &String, pattern: &String) -> usize {
 mod tests {
     use super::*;
 
-    // #[test]
-    // fn test_most_frequent_kmers() {
-    //     struct TestCase {
-    //         text: String,
-    //         k: usize,
-    //         most_freq: Vec<String>
-    //     }
-    //     let cases = [
-    //         TestCase {
-    //             text: String::from("ACGTTGCATGTCGCATGATGCATGAGAGCT"),
-    //             k: 4,
-    //             most_freq: vec![String::from("CATG"), String::from("GCAT")]
-    //         }
-    //     ];
+    #[test]
+    fn test_most_frequent_kmers() {
+        struct TestCase {
+            text: String,
+            k: usize,
+            most_freq: Vec<String>
+        }
+        let cases = [
+            TestCase {
+                text: String::from("ACGTTGCATGTCGCATGATGCATGAGAGCT"),
+                k: 4,
+                most_freq: vec![String::from("CATG"), String::from("GCAT")]
+            },
+            TestCase {
+                text: String::from("TGGTAGCGACGTTGGTCCCGCCGCTTGAGAATCTGGATGAACATAAGCTCCCACTTGGCTTATTCAGAGAACTGGTCAACACTTGTCTCTCCCAGCCAGGTCTGACCACCGGGCAACTTTTAGAGCACTATCGTGGTACAAATAATGCTGCCAC"),
+                k: 3,
+                most_freq: vec![String::from("TGG")]
+            },
+            TestCase {
+                text: String::from("CAGTGGCAGATGACATTTTGCTGGTCGACTGGTTACAACAACGCCTGGGGCTTTTGAGCAACGAGACTTTTCAATGTTGCACCGTTTGCTGCATGATATTGAAAACAATATCACCAAATAAATAACGCCTTAGTAAGTAGCTTTT"),
+                k: 4,
+                most_freq: vec![String::from("TTTT")]
+            },
+            TestCase {
+                text: String::from("ATACAATTACAGTCTGGAACCGGATGAACTGGCCGCAGGTTAACAACAGAGTTGCCAGGCACTGCCGCTGACCAGCAACAACAACAATGACTTTGACGCGAAGGGGATGGCATGAGCGAACTGATCGTCAGCCGTCAGCAACGAGTATTGTTGCTGACCCTTAACAATCCCGCCGCACGTAATGCGCTAACTAATGCCCTGCTG"),
+                k: 5,
+                most_freq: vec![String::from("AACAA")]
+            },
+            TestCase {
+                text: String::from("CCAGCGGGGGTTGATGCTCTGGGGGTCACAAGATTGCATTTTTATGGGGTTGCAAAAATGTTTTTTACGGCAGATTCATTTAAAATGCCCACTGGCTGGAGACATAGCCCGGATGCGCGTCTTTTACAACGTATTGCGGGGTAAAATCGTAGATGTTTTAAAATAGGCGTAAC"),
+                k: 5,
+                most_freq: vec![String::from("AAAAT"), String::from("GGGGT"), String::from("TTTTA")]
+            }
+        ];
 
-    //     let cases = cases.iter();
-
-    //     for case in cases {
-    //         let most_freq_vec: Vec<&str> = case.most_freq.iter().map(|x| &x[..]).collect();
-    //         assert_eq!(most_frequent_kmers(&case.text, case.k), most_freq_vec);
-    //     }
-    // }
+        for case in cases.iter() {
+            let test_most_freq_vec: Vec<&str> = case.most_freq.iter().map(|x| &x[..]).collect();
+            let mut most_freq_vec = most_frequent_kmers(&case.text, case.k);
+            most_freq_vec.sort_unstable();
+            assert_eq!(most_freq_vec, test_most_freq_vec);
+        }
+    }
 
     // #[test]
     // fn test_most_frequent_kmer_hash() {
@@ -130,47 +195,87 @@ mod tests {
         assert_eq!(hash.get("ZZZZ"), None);
     }
 
+    // #[test]
+    // fn test_invert_hash() {
+    //     let hash: HashMap<_, _> = vec![
+    //         (String::from("key1"), String::from("value")),
+    //         (String::from("key2"), String::from("value"))
+    //     ].iter().cloned().collect();
+
+    //     let value = String::from("value");
+    //     let key1 = String::from("key1");
+    //     let key2 = String::from("key2");
+    //     let inverted_hash: HashMap<_, _> = vec![
+    //         (&value, &vec![key1, key2])
+    //     ].iter().cloned().collect();
+
+    //     assert_eq!(invert_hash(&hash), inverted_hash);
+    // }
+
+    #[test]
+    fn test_inefficient_invert_hash() {
+        let hash: HashMap<_, _> = vec![
+            (String::from("key1"), String::from("value")),
+            (String::from("key2"), String::from("value"))
+        ].iter().cloned().collect();
+
+        let value = String::from("value");
+        let key1 = String::from("key1");
+        let key2 = String::from("key2");
+        let test_inverted_hash: HashMap<_, _> = vec![
+            (value, vec![key1, key2])
+        ].iter().cloned().collect();
+
+        let mut inverted_hash = inefficient_invert_hash(hash);
+        // We care that the vector values of the inverted hash 
+        // contain the correct values but are agnostic to the
+        // order- we sort here for deterministic testing.
+        for (_key, value) in inverted_hash.iter_mut() {
+            value.sort_unstable();
+        }
+
+        assert_eq!(inverted_hash, test_inverted_hash);
+    }
+
     #[test]
     fn test_kmer_count() {
         #[derive(Debug)]
-        struct TestCase {
-            text: String,
-            pattern: String,
+        struct TestCase<'a> {
+            text: &'a String,
+            pattern: &'a String,
             count: usize
         }
         let cases = [
             TestCase {
-                text: String::from("GCGCG"),
-                pattern: String::from("GCG"),
+                text: &String::from("GCGCG"),
+                pattern: &String::from("GCG"),
                 count: 2
             },
             TestCase {
-                text: String::from("ACGTACGTACG"),
-                pattern: String::from("CG"),
+                text: &String::from("ACGTACGTACG"),
+                pattern: &String::from("CG"),
                 count: 3
             },
             TestCase {
-                text: String::from("AAAGAGTGTCTGATAGCAGCTTCTGAACTGGTTACCTGCCGTGAGTAAATTAAATTTTATTGACTTAGGTCACTAAATACTTTAACCAATATAGGCATAGCGCACAGACAGATAATAATTACAGAGTACACAACATCCA"),
-                pattern: String::from("AAA"),
+                text: &String::from("AAAGAGTGTCTGATAGCAGCTTCTGAACTGGTTACCTGCCGTGAGTAAATTAAATTTTATTGACTTAGGTCACTAAATACTTTAACCAATATAGGCATAGCGCACAGACAGATAATAATTACAGAGTACACAACATCCA"),
+                pattern: &String::from("AAA"),
                 count: 4
             },
             TestCase {
-                text: String::from("AGCGTGCCGAAATATGCCGCCAGACCTGCTGCGGTGGCCTCGCCGACTTCACGGATGCCAAGTGCATAGAGGAAGCGAGCAAAGGTGGTTTCTTTCGCTTTATCCAGCGCGTTAACCACGTTCTGTGCCGACTTT"),
-                pattern: String::from("TTT"),
+                text: &String::from("AGCGTGCCGAAATATGCCGCCAGACCTGCTGCGGTGGCCTCGCCGACTTCACGGATGCCAAGTGCATAGAGGAAGCGAGCAAAGGTGGTTTCTTTCGCTTTATCCAGCGCGTTAACCACGTTCTGTGCCGACTTT"),
+                pattern: &String::from("TTT"),
                 count: 4
             },
             TestCase {
-                text: String::from("GGACTTACTGACGTACG"),
-                pattern: String::from("ACT"),
+                text: &String::from("GGACTTACTGACGTACG"),
+                pattern: &String::from("ACT"),
                 count: 2
             }
         ];
 
-        let cases = cases.iter();
-
-        for case in cases {
+        for case in cases.iter() {
             println!("{:?}", case);
-            assert_eq!(kmer_count(&case.text, &case.pattern), case.count)
+            assert_eq!(kmer_count(case.text, case.pattern), case.count)
         }
     }
 }
